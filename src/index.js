@@ -1,7 +1,10 @@
+import cors from 'cors';
 import express from 'express';
 import { ApolloServer, gql } from 'apollo-server-express';
 
 const app = express();
+
+app.use(cors());
 
 const schema = gql`
   type Query {
@@ -23,9 +26,16 @@ const resolvers = {
   }
 };
 
+const playground = {
+  settings: {
+    'editor.cursorShape': 'line'
+  }
+};
+
 const server = new ApolloServer({
   typeDefs: schema,
-  resolvers
+  resolvers,
+  playground
 });
 
 server.applyMiddleware({ app, path: '/graphql' });
