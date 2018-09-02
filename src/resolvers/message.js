@@ -2,6 +2,7 @@ import Sequelize from 'sequelize';
 import { combineResolvers } from 'graphql-resolvers';
 
 import { isAuthenticated, isMessageOwner } from './authorization';
+import pubsub, { EVENTS } from '../subscription';
 
 const toCursorHash = string => Buffer.from(string).toString('base64');
 
@@ -45,10 +46,16 @@ export default {
   Mutation: {
     createMessage: combineResolvers(isAuthenticated, async (parent, { text }, { me, models }) => {
       try {
-        return await models.Message.create({
+        const message = await models.Message.create({
           text,
           userId: me.id
         });
+
+        pubsub.publish(EVENTS.MESSAGE.CREATED, {
+          messageCreated: { message }
+        });
+
+        return message;
       } catch (error) {
         throw new Error(error);
       }
@@ -65,6 +72,12 @@ export default {
   Message: {
     user: async (message, args, { models }) => {
       return await models.User.findById(message.userId);
+    }
+  },
+
+  Subscription: {
+    messageCreated: {
+      subscribe: () => pubsub.asyncIterator(EVENTS.MESSAGE.CREATED)
     }
   }
 };
