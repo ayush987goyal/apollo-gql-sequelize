@@ -18,6 +18,9 @@ const user = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       allowNull: false,
       validate: { notEmpty: true, len: [7, 42] }
+    },
+    role: {
+      type: DataTypes.STRING
     }
   });
 
