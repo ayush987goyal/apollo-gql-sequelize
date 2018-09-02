@@ -1,3 +1,7 @@
+import { combineResolvers } from 'graphql-resolvers';
+
+import { isAuthenticated, isMessageOwner } from './authorization';
+
 export default {
   Query: {
     messages: async (parent, args, { models }) => {
@@ -9,7 +13,7 @@ export default {
   },
 
   Mutation: {
-    createMessage: async (parent, { text }, { me, models }) => {
+    createMessage: combineResolvers(isAuthenticated, async (parent, { text }, { me, models }) => {
       try {
         return await models.Message.create({
           text,
@@ -18,10 +22,14 @@ export default {
       } catch (error) {
         throw new Error(error);
       }
-    },
-    deleteMessage: async (parent, { id }, { models }) => {
-      return await models.Message.destroy({ where: { id } });
-    }
+    }),
+    deleteMessage: combineResolvers(
+      isAuthenticated,
+      isMessageOwner,
+      async (parent, { id }, { models }) => {
+        return await models.Message.destroy({ where: { id } });
+      }
+    )
   },
 
   Message: {
