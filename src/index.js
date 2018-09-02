@@ -4,10 +4,12 @@ import cors from 'cors';
 import express from 'express';
 import jwt from 'jsonwebtoken';
 import { ApolloServer, AuthenticationError } from 'apollo-server-express';
+import DataLoader from 'dataloader';
 
 import schema from './schema';
 import resolvers from './resolvers';
 import models, { sequelize } from './models';
+import loaders from './loaders';
 
 const app = express();
 
@@ -58,7 +60,10 @@ const server = new ApolloServer({
       return {
         models,
         me,
-        secret: process.env.SECRET
+        secret: process.env.SECRET,
+        loaders: {
+          user: new DataLoader(keys => loaders.user.batchUsers(keys, models))
+        }
       };
     }
   }
